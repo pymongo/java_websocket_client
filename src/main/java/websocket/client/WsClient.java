@@ -67,6 +67,7 @@ public final class WsClient extends WebSocketClient {
   public void onClose(int code, String reason, boolean remote) {
     System.out.println("onClose");
     System.out.println("[WebSocket 断线重连]: webSocket 掉线了...");
+    // TODO 尝试断线重连
 //    reconnectHandler.postDelayed(new Runnable() {
 //      @Override
 //      public void run() {
