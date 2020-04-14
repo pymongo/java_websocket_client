@@ -17,6 +17,11 @@
   <version>0.1</version>
 
   <dependencies>
+    <dependency>
+      <groupId>org.java-websocket</groupId>
+      <artifactId>Java-WebSocket</artifactId>
+      <version>1.4.1</version>
+    </dependency>
 
     <dependency>
       <!-- optional -->
@@ -35,7 +40,7 @@
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-log4j12</artifactId>
       <version>1.7.30</version>
-<!--      <scope>test</scope>-->
+      <!--      <scope>test</scope>-->
     </dependency>
   </dependencies>
 
