@@ -11,8 +11,8 @@ import java.util.List;
 
 public final class WsClient extends WebSocketClient {
     private static final String WEBSOCKET_URL = "ws://websocket.testcadae.top/ws";
-//  private static final String WEBSOCKET_URL = "ws://127.0.0.1:8082/ws/";
-  private static WsClient instance;
+    //  private static final String WEBSOCKET_URL = "ws://127.0.0.1:8082/ws/";
+    private static WsClient instance;
 
 //  public interface onMessageListener {
 //    void onMessageCallback(String message);
@@ -27,47 +27,47 @@ public final class WsClient extends WebSocketClient {
 //  public static onMessageListener emptyCallback = message -> {
 //  };
 
-  private List<String> channels = new ArrayList<>();
+    private List<String> channels = new ArrayList<>();
 
-  public static WsClient getInstance() {
-    if (instance == null) {
-      try {
-        instance = new WsClient(new URI(WEBSOCKET_URL));
-        instance.setConnectionLostTimeout(5);
-      } catch (URISyntaxException e) {
-        System.out.println(e);
-      }
+    public static WsClient getInstance() {
+        if (instance == null) {
+            try {
+                instance = new WsClient(new URI(WEBSOCKET_URL));
+                instance.setConnectionLostTimeout(5);
+            } catch (URISyntaxException e) {
+                System.out.println(e);
+            }
+        }
+        return instance;
     }
-    return instance;
-  }
 
-  private WsClient(URI serverUri) {
-    super(serverUri);
-  }
+    private WsClient(URI serverUri) {
+        super(serverUri);
+    }
 
-  @Override
-  public void onOpen(ServerHandshake handshakedata) {
-    System.out.println("onOpen: webSocket connected");
-    Main.logger.info("onOpen: webSocket connected");
-  }
+    @Override
+    public void onOpen(ServerHandshake handshakedata) {
+        System.out.println("onOpen: webSocket connected");
+        Main.logger.info("onOpen: webSocket connected");
+    }
 
-  @Override
-  public void onMessage(String message) {
-    System.out.println("WebSocket onStringMessage: " + message);
-  }
+    @Override
+    public void onMessage(String message) {
+        System.out.println("WebSocket onStringMessage: " + message);
+    }
 
-  @Override
-  public void onMessage(ByteBuffer bytes) {
-    System.out.println("WebSocket onBinaryMessage: " + bytes);
-  }
+    @Override
+    public void onMessage(ByteBuffer bytes) {
+        System.out.println("WebSocket onBinaryMessage: " + bytes);
+    }
 
-  //  private android.os.Handler reconnectHandler = new android.os.Handler();
+    //  private android.os.Handler reconnectHandler = new android.os.Handler();
 
-  @Override
-  public void onClose(int code, String reason, boolean remote) {
-    System.out.println("onClose");
-    System.out.println("[WebSocket 断线重连]: webSocket 掉线了...");
-    // TODO 尝试断线重连
+    @Override
+    public void onClose(int code, String reason, boolean remote) {
+        System.out.println("onClose");
+        System.out.println("[WebSocket 断线重连]: webSocket 掉线了...");
+        // TODO 尝试断线重连
 //    reconnectHandler.postDelayed(new Runnable() {
 //      @Override
 //      public void run() {
@@ -94,38 +94,38 @@ public final class WsClient extends WebSocketClient {
 //        }
 //      }
 //    }, 5000);
-  }
-
-  @Override
-  public void onError(Exception e) {
-    System.out.println("onError " + e);
-  }
-
-  public void subscribe(String channelName) {
-    if (isClosed() || channels.contains(channelName)) {
-      return;
     }
-    send("{\"subscribe\":\"" + channelName + "\"}");
-    channels.add(channelName);
-  }
 
-  private void resubscribe(String channelName) {
-    send("{\"subscribe\":\"" + channelName + "\"}");
-  }
-
-  public void unsubscribe(String channelName) {
-    if (!channels.contains(channelName)) {
-      return;
+    @Override
+    public void onError(Exception e) {
+        System.out.println("onError " + e);
     }
-    send("{\"unsubscribe\":\"" + channelName + "\"}");
-    channels.remove(channelName);
-  }
 
-  public void unsubscribeAll() {
-    for (String channelName : channels) {
-      send("{\"unsubscribe\":\"" + channelName + "\"}");
+    public void subscribe(String channelName) {
+        if (isClosed() || channels.contains(channelName)) {
+            return;
+        }
+        send("{\"subscribe\":\"" + channelName + "\"}");
+        channels.add(channelName);
     }
-    channels.clear();
-  }
+
+    private void resubscribe(String channelName) {
+        send("{\"subscribe\":\"" + channelName + "\"}");
+    }
+
+    public void unsubscribe(String channelName) {
+        if (!channels.contains(channelName)) {
+            return;
+        }
+        send("{\"unsubscribe\":\"" + channelName + "\"}");
+        channels.remove(channelName);
+    }
+
+    public void unsubscribeAll() {
+        for (String channelName : channels) {
+            send("{\"unsubscribe\":\"" + channelName + "\"}");
+        }
+        channels.clear();
+    }
 }
 
