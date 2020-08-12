@@ -2,15 +2,22 @@ package websocket.client;
 
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
+import org.json.JSONObject;
 
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.zip.GZIPInputStream;
+
 
 public final class WsClient extends WebSocketClient {
-    private static final String WEBSOCKET_URL = "ws://websocket.testcadae.top/ws";
+    private static final String WEBSOCKET_URL = "wss://ws-rust.testcadae.top/ws/";
     //  private static final String WEBSOCKET_URL = "ws://127.0.0.1:8082/ws/";
     private static WsClient instance;
 
@@ -27,7 +34,7 @@ public final class WsClient extends WebSocketClient {
 //  public static onMessageListener emptyCallback = message -> {
 //  };
 
-    private List<String> channels = new ArrayList<>();
+    private final List<String> channels = new ArrayList<>();
 
     public static WsClient getInstance() {
         if (instance == null) {
@@ -41,7 +48,7 @@ public final class WsClient extends WebSocketClient {
         return instance;
     }
 
-    private WsClient(URI serverUri) {
+    WsClient(URI serverUri) {
         super(serverUri);
     }
 
@@ -49,6 +56,7 @@ public final class WsClient extends WebSocketClient {
     public void onOpen(ServerHandshake handshakedata) {
         System.out.println("onOpen: webSocket connected");
         Main.logger.info("onOpen: webSocket connected");
+        send("subscribe order_books·iicg·zh");
     }
 
     @Override
@@ -58,7 +66,16 @@ public final class WsClient extends WebSocketClient {
 
     @Override
     public void onMessage(ByteBuffer bytes) {
-        System.out.println("WebSocket onBinaryMessage: " + bytes);
+        String msg = gzipDecompress(bytes.array());
+        System.out.println(msg);
+        try {
+            JSONObject json = new JSONObject(msg);
+            System.out.println(json.toString(2));
+            System.out.println(json.getString("channel"));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        System.out.println("WebSocket onBinaryMessage: " + msg);
     }
 
     //  private android.os.Handler reconnectHandler = new android.os.Handler();
@@ -67,33 +84,6 @@ public final class WsClient extends WebSocketClient {
     public void onClose(int code, String reason, boolean remote) {
         System.out.println("onClose");
         System.out.println("[WebSocket 断线重连]: webSocket 掉线了...");
-        // TODO 尝试断线重连
-//    reconnectHandler.postDelayed(new Runnable() {
-//      @Override
-//      public void run() {
-//        try {
-//          Log.i(TAG, "[WebSocket 断线重连]: 尝试重连中...");
-//          try {
-//            reconnectBlocking();
-//          } catch (NullPointerException e) {
-//            // java.lang.NullPointerException: Attempt to invoke virtual method 'long java.lang.Thread.getId()' on a null object reference
-//            Log.e(TAG, Log.getStackTraceString(e));
-//          }
-//          if (isClosed()) {
-//            // 如果还是掉线
-//            Log.i(TAG, "[WebSocket 断线重连]: 重连失败！");
-//            reconnectHandler.postDelayed(this, 5000);
-//          } else {
-//            Log.i(TAG, "[WebSocket 断线重连]: 重连成功！正在恢复订阅...");
-//            for (String channel : channels) {
-//              resubscribe(channel);
-//            }
-//          }
-//        } catch (InterruptedException e) {
-//          Log.e(TAG, Log.getStackTraceString(e));
-//        }
-//      }
-//    }, 5000);
     }
 
     @Override
@@ -101,31 +91,24 @@ public final class WsClient extends WebSocketClient {
         System.out.println("onError " + e);
     }
 
-    public void subscribe(String channelName) {
-        if (isClosed() || channels.contains(channelName)) {
-            return;
+    private static String gzipDecompress(byte[] compressed) {
+        ByteArrayInputStream bis = new ByteArrayInputStream(compressed);
+        StringBuilder sb = new StringBuilder();
+        try {
+            GZIPInputStream gis = new GZIPInputStream(bis);
+            BufferedReader br = new BufferedReader(new InputStreamReader(gis, StandardCharsets.UTF_8));
+            String line;
+            while ((line = br.readLine()) != null) {
+                sb.append(line);
+            }
+            br.close();
+            gis.close();
+            bis.close();
+        } catch (Exception e) {
+            System.out.println(e);
+//            Log.e(TAG, "decompress: " + Log.getStackTraceString(e));
         }
-        send("{\"subscribe\":\"" + channelName + "\"}");
-        channels.add(channelName);
-    }
-
-    private void resubscribe(String channelName) {
-        send("{\"subscribe\":\"" + channelName + "\"}");
-    }
-
-    public void unsubscribe(String channelName) {
-        if (!channels.contains(channelName)) {
-            return;
-        }
-        send("{\"unsubscribe\":\"" + channelName + "\"}");
-        channels.remove(channelName);
-    }
-
-    public void unsubscribeAll() {
-        for (String channelName : channels) {
-            send("{\"unsubscribe\":\"" + channelName + "\"}");
-        }
-        channels.clear();
+        return sb.toString();
     }
 }
 
